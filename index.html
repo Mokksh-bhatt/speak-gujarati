@@ -85,6 +85,10 @@
   .price { font-family:Fraunces, serif; font-size:34px; margin:16px 0 4px; color:var(--gold); }
   .join .btn { margin-top:20px; font-size:18px; padding:15px 32px; }
   .fine { font-size:13px; color:#e5c5b5 !important; margin-top:16px !important; }
+  .jf { max-width:420px; margin:22px auto 0; display:grid; gap:14px; text-align:left; }
+  .jf label { font-size:14px; font-weight:600; color:#f4dfd2; display:grid; gap:6px; }
+  .jf input, .jf select { font:inherit; font-size:16px; padding:13px 14px; border-radius:14px; border:0; background:#fff; color:var(--ink); width:100%; }
+  .jf .btn { margin-top:6px; justify-self:center; }
   footer { text-align:center; color:var(--soft); font-size:13px; padding:28px 0; }
 
   .sticky { position:fixed; left:0; right:0; bottom:0; z-index:30; background:#fff; border-top:1px solid var(--line); padding:10px 16px calc(10px + env(safe-area-inset-bottom)); display:flex; align-items:center; justify-content:space-between; gap:12px; }
@@ -184,12 +188,31 @@
   </section>
 
   <div class="join" id="join">
-    <h2>Be first when it opens</h2>
-    <p>We plan to open around Diwali, 8 November 2026.</p>
-    <div class="price">$9 a month · $59 a year</div>
-    <p>Early list members get the first month free.</p>
-    <a class="btn" data-join href="#">Join the early list</a>
-    <p class="fine">Free to join. No card. One email when we open. If we decide not to build it, we tell you and delete your email.</p>
+    <div id="step1">
+      <h2>Be first when it opens</h2>
+      <p>We plan to open around Diwali, 8 November 2026.</p>
+      <div class="price">$9 a month · $59 a year</div>
+      <p>Early list members get the first month free.</p>
+      <form id="jf" class="jf">
+        <label>Your email<input type="email" name="email" required placeholder="you@example.com" autocomplete="email"></label>
+        <label>Which Gujarati does your family speak?
+          <select name="dialect"><option>Kathiyawadi</option><option>Surti</option><option>Charotari</option><option>Kutchi</option><option selected>Standard / not sure</option></select></label>
+        <label>Which of these would you use most?
+          <select name="feature"><option>Call rehearsal before I phone my grandparents</option><option>Daily voice note from my own Ba as the lesson</option><option>Lessons made from my Ba's own voice notes</option><option>Live subtitles during a real call</option><option selected>Lessons in my family's dialect</option></select></label>
+        <button class="btn" type="submit">Join the early list</button>
+      </form>
+      <p class="fine">Free to join. No card. One email when we open. If we decide not to build it, we tell you and delete your email.</p>
+    </div>
+    <div id="step2" hidden>
+      <h2>You're on the list 🎉</h2>
+      <p>We will email you once, when it opens.</p>
+      <div id="pre" hidden>
+        <div class="price">Founding member: $9</div>
+        <p>Pay $9 today and get your first 3 months when we open (normally $27). Nothing is delivered today. Full refund any time before launch, no questions.</p>
+        <a class="btn" id="paybtn" target="_blank" rel="noopener" href="#">Pre-order for $9</a>
+        <p class="fine">Optional. Your place on the list is free either way.</p>
+      </div>
+    </div>
   </div>
 
   <footer>Made in Vadodara, Gujarat.</footer>
@@ -198,12 +221,27 @@
 <div class="sticky"><span><b>$9/mo</b> · first month free</span><a class="btn sm" data-join href="#">Join early list</a></div>
 
 <script>
-const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScuLGi9NHfytjHQPSpbgdFWW1H4W93eEMHwXfDQkoHmYjU5Ng/viewform";
-// Source tracking: a link like ...?src=instagram pre-fills "Where did you hear about this?" on the form
+const FORM_POST = "https://docs.google.com/forms/d/e/1FAIpQLScuLGi9NHfytjHQPSpbgdFWW1H4W93eEMHwXfDQkoHmYjU5Ng/formResponse";
+const PAY_URL = ""; // pre-order payment link; while empty, the pre-order offer stays hidden
+// Source tracking: a link like ...?src=instagram is saved with the sign-up as "Where did you hear about this?"
 const SRC = { reddit: "Reddit", instagram: "Instagram", ig: "Instagram", youtube: "YouTube", yt: "YouTube", friend: "A friend or family", whatsapp: "A friend or family" };
 const src = (new URLSearchParams(location.search).get("src") || "").toLowerCase().split("-")[0];
-const JOIN_URL = FORM_URL + (src ? "?usp=pp_url&entry.1668686996=" + encodeURIComponent(SRC[src] || "Somewhere else") : "");
-document.querySelectorAll("[data-join]").forEach(a => { a.href = JOIN_URL; a.target = "_blank"; a.rel = "noopener"; });
+document.querySelectorAll("[data-join]").forEach(a => { a.href = "#join"; });
+
+// Sign-up form: saves to the Google Form, then shows the pre-order offer
+const jf = document.getElementById("jf");
+jf.addEventListener("submit", e => {
+  e.preventDefault();
+  const body = new URLSearchParams({ "entry.1860052184": jf.email.value, "entry.984555520": jf.dialect.value, "entry.1624282640": jf.feature.value });
+  if (src) body.set("entry.1668686996", SRC[src] || "Somewhere else");
+  const done = () => {
+    document.getElementById("step1").hidden = true; document.getElementById("step2").hidden = false;
+    if (PAY_URL) { document.getElementById("pre").hidden = false; document.getElementById("paybtn").href = PAY_URL; }
+    document.getElementById("join").scrollIntoView({ block: "center" });
+  };
+  jf.querySelector("button").disabled = true;
+  fetch(FORM_POST, { method: "POST", mode: "no-cors", body }).then(done, done);
+});
 
 // Dialect picker
 const D = {
