@@ -199,7 +199,11 @@
 
 <script>
 const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScuLGi9NHfytjHQPSpbgdFWW1H4W93eEMHwXfDQkoHmYjU5Ng/viewform";
-document.querySelectorAll("[data-join]").forEach(a => { a.href = FORM_URL; a.target = "_blank"; a.rel = "noopener"; });
+// Source tracking: a link like ...?src=instagram pre-fills "Where did you hear about this?" on the form
+const SRC = { reddit: "Reddit", instagram: "Instagram", ig: "Instagram", youtube: "YouTube", yt: "YouTube", friend: "A friend or family", whatsapp: "A friend or family" };
+const src = (new URLSearchParams(location.search).get("src") || "").toLowerCase().split("-")[0];
+const JOIN_URL = FORM_URL + (src ? "?usp=pp_url&entry.1668686996=" + encodeURIComponent(SRC[src] || "Somewhere else") : "");
+document.querySelectorAll("[data-join]").forEach(a => { a.href = JOIN_URL; a.target = "_blank"; a.rel = "noopener"; });
 
 // Dialect picker
 const D = {
